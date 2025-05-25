@@ -1,0 +1,67 @@
+import numpy as np
+DISEASES = ["ОРВИ", "Коронавирус", "Грипп", "Корь", "Пневмония", "Коклюш", "Бронхит"]
+def create_user_answers():
+    return {
+        "cough": None,
+        "runny_nose": None,
+        "headache": None,
+        "weakness": None,
+        "breathing_difficulty": None,
+        "smell_taste_loss": None,
+        "temperature": None
+    }
+def calculate_probabilities(user_answers):
+    probabilities = {
+        "ОРВИ": 30,
+        "Коронавирус": 20,
+        "Грипп": 25,
+        "Корь": 5,
+        "Пневмония": 10,
+        "Коклюш": 5,
+        "Бронхит": 5
+    }
+    # Логика расчета вероятностей (как в оригинальном коде)
+    if user_answers["cough"] == "dry":
+        probabilities["Коронавирус"] += 15
+        probabilities["Грипп"] += 10
+        probabilities["ОРВИ"] += 5
+    elif user_answers["cough"] == "wet":
+        probabilities["Бронхит"] += 15
+        probabilities["Пневмония"] += 10
+        probabilities["ОРВИ"] += 5
+    if user_answers["runny_nose"] == "yes":
+        probabilities["ОРВИ"] += 15
+        probabilities["Грипп"] += 5
+    elif user_answers["runny_nose"] == "congestion":
+        probabilities["Коронавирус"] += 10
+    if user_answers["headache"] == "yes":
+        probabilities["Грипп"] += 10
+        probabilities["Коронавирус"] += 5
+    if user_answers["weakness"] == "yes":
+        probabilities["Грипп"] += 10
+        probabilities["Коронавирус"] += 5
+        probabilities["Пневмония"] += 5
+    if user_answers["breathing_difficulty"] == "yes":
+        probabilities["Пневмония"] += 15
+        probabilities["Коронавирус"] += 10
+        probabilities["Бронхит"] += 5
+    if user_answers["smell_taste_loss"] == "yes":
+        probabilities["Коронавирус"] += 25
+    if user_answers["temperature"] is not None:
+        temp = user_answers["temperature"]
+        if temp > 37.5:
+            probabilities["Грипп"] += 10
+            probabilities["Пневмония"] += 5
+            probabilities["Коронавирус"] += 5
+        if temp > 38.5:
+            probabilities["Грипп"] += 5
+            probabilities["Пневмония"] += 5
+    # Нормализация
+    total = sum(probabilities.values())
+    for disease in probabilities:
+        probabilities[disease] = round(probabilities[disease] / total * 100)
+    diff = 100 - sum(probabilities.values())
+    if diff != 0:
+        max_disease = max(probabilities, key=probabilities.get)
+        probabilities[max_disease] += diff
+    return probabilities
