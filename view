@@ -1,0 +1,295 @@
+import flet as ft
+import matplotlib
+matplotlib.use('TkAgg')
+def create_question_card(title, control):
+    return ft.Card(
+        content=ft.Container(
+            content=ft.Column([
+                ft.Text(title, size=16, weight="bold", color="black"),
+                control
+            ], spacing=10),
+            padding=15
+        ),
+        elevation=5,
+        width=300
+    )
+def create_main_view(on_start_click, on_settings_click):
+    return ft.Column(
+        [
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Text(
+                            "Диагностика болезни",
+                            style=ft.TextStyle(size=24, weight=ft.FontWeight.BOLD),
+                            text_align=ft.TextAlign.CENTER,
+                            color=ft.Colors.BLUE_800
+                        ),
+                        ft.Divider(height=30),
+                        ft.Image(
+                            src="https://cdn-icons-png.flaticon.com/512/2964/2964488.png",
+                            width=150,
+                            height=150,
+                            fit=ft.ImageFit.CONTAIN
+                        ),
+                        ft.Divider(height=30),
+                        ft.ElevatedButton(
+                            "Начать диагностику",
+                            on_click=on_start_click,
+                            width=250,
+                            height=50,
+                            style=ft.ButtonStyle(
+                                shape=ft.RoundedRectangleBorder(radius=10),
+                                bgcolor=ft.Colors.BLUE_700,
+                                color="white",
+                                padding=15,
+                                elevation=5
+                            )
+                        ),
+                        ft.Divider(height=10),
+                        ft.ElevatedButton(
+                            "Настройки",
+                            on_click=on_settings_click,
+                            width=250,
+                            height=50,
+                            style=ft.ButtonStyle(
+                                shape=ft.RoundedRectangleBorder(radius=10),
+                                bgcolor=ft.Colors.BLUE_500,
+                                color="white",
+                                padding=15,
+                                elevation=5
+                            )
+                        )
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                alignment=ft.alignment.center,
+                expand=True
+            )
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        expand=True
+    )
+def create_settings_view(on_back_click, on_color_change):
+    color_buttons = ft.Row(
+        [
+            ft.ElevatedButton(
+                "Синий", on_click=lambda e: on_color_change("lightblue"),
+                style=ft.ButtonStyle(bgcolor=ft.Colors.BLUE_100)
+            ),
+            ft.ElevatedButton(
+                "Зелёный", on_click=lambda e: on_color_change("lightgreen"),
+                style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_100)
+            ),
+            ft.ElevatedButton(
+                "Белый", on_click=lambda e: on_color_change("white"),
+                style=ft.ButtonStyle(bgcolor=ft.Colors.WHITE)
+            ),
+            ft.ElevatedButton(
+                "Жёлтый", on_click=lambda e: on_color_change("yellow"),
+                style=ft.ButtonStyle(bgcolor=ft.Colors.YELLOW_100)
+            ),
+            ft.ElevatedButton(
+                "Красный", on_click=lambda e: on_color_change("#ffcccc"),
+                style=ft.ButtonStyle(bgcolor=ft.Colors.RED_100)
+            ),
+        ],
+        spacing=10,
+        alignment=ft.MainAxisAlignment.CENTER
+    )
+    return ft.Column(
+        [
+            ft.Row(
+                [
+                    ft.ElevatedButton(
+                        "← Назад",
+                        on_click=on_back_click,
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=10),
+                            bgcolor=ft.Colors.BLUE_500,
+                            color="white"
+                        )
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.START
+            ),
+            ft.Divider(height=20),
+            ft.Text("Выберите цвет фона:", size=20, color="black"),
+            ft.Divider(height=10),
+            color_buttons,
+            ft.Divider(height=30),
+            ft.ElevatedButton(
+                "Вернуться в главное меню",
+                on_click=on_back_click,
+                width=300,
+                height=50,
+                style=ft.ButtonStyle(
+                    shape=ft.RoundedRectangleBorder(radius=10),
+                    bgcolor=ft.Colors.BLUE_500,
+                    color="white"
+                )
+            )
+        ],
+        spacing=20,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        expand=True
+    )
+def create_questions_view(questions_data, on_back_click, on_next_click):
+    content = [
+        ft.Row(
+            [
+                ft.ElevatedButton(
+                    "← Назад",
+                    on_click=on_back_click,
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=10),
+                        bgcolor=ft.Colors.BLUE_500,
+                        color="white"
+                    )
+                ),
+                ft.ElevatedButton(
+                    "Далее →",
+                    on_click=on_next_click,
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=10),
+                        bgcolor=ft.Colors.BLUE_500,
+                        color="white"
+                    )
+                )
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+        ),
+        ft.Divider(height=20)
+    ]
+    # Добавляем вопросы
+    for i in range(0, len(questions_data), 2):
+        row_questions = questions_data[i:i+2]
+        content.append(
+            ft.Row(
+                [create_question_card(q["title"], q["control"]) for q in row_questions],
+                spacing=20,
+                alignment=ft.MainAxisAlignment.CENTER
+            )
+        )
+    content.extend([
+        ft.Divider(height=20),
+        ft.ElevatedButton(
+            "Продолжить",
+            on_click=on_next_click,
+            width=300,
+            height=50,
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=10),
+                bgcolor=ft.Colors.BLUE_500,
+                color="white"
+            )
+        )
+    ])
+    return ft.Column(
+        content,
+        spacing=20,
+        scroll=ft.ScrollMode.AUTO,
+        expand=True
+    )
+def create_temperature_view(on_back_click, on_save_temp, on_show_results):
+    error_text = ft.Text("", color="red")
+    next_button = ft.ElevatedButton("Показать результаты", on_click=on_show_results, visible=False)
+    def save_temp_handler(e):
+        on_save_temp(temperature_field.value, error_text, next_button)
+    temperature_field = ft.TextField(
+        label="Введите температуру (например: 36.6)",
+        icon=ft.Icons.THERMOSTAT,
+        width=300,
+        on_change=save_temp_handler
+    )
+    return ft.Column(
+        [
+            ft.Row(
+                [
+                    ft.ElevatedButton(
+                        "← Назад",
+                        on_click=on_back_click,
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=10),
+                            bgcolor=ft.Colors.BLUE_500,
+                            color="white"
+                        )
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.START
+            ),
+            ft.Divider(height=30),
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Text("7. Какая у вас температура?", size=18, weight="bold", color="black"),
+                        ft.Divider(height=10),
+                        temperature_field,
+                        error_text,
+                        ft.Divider(height=20),
+                        ft.ElevatedButton(
+                            "Сохранить температуру",
+                            on_click=save_temp_handler,
+                            width=300,
+                            height=50,
+                            style=ft.ButtonStyle(
+                                shape=ft.RoundedRectangleBorder(radius=10),
+                                bgcolor=ft.Colors.BLUE_500,
+                                color="white"
+                            )
+                        ),
+                        ft.Divider(height=20),
+                        next_button
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=10
+                ),
+                alignment=ft.alignment.center,
+                width=400
+            )
+        ],
+        spacing=20,
+        expand=True
+    )
+def create_results_view(on_back_click):
+    return ft.Column(
+        [
+            ft.Row(
+                [
+                    ft.ElevatedButton(
+                        "← Назад",
+                        on_click=on_back_click,
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=10),
+                            bgcolor=ft.Colors.BLUE_500,
+                            color="white"
+                        )
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.START
+            ),
+            ft.Divider(height=30),
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Text("Диаграмма отображается в отдельном окне", size=18, color="black"),
+                        ft.Divider(height=30),
+                        ft.ElevatedButton(
+                            "Вернуться в главное меню",
+                            on_click=on_back_click,
+                            width=300,
+                            height=50,
+                            style=ft.ButtonStyle(
+                                shape=ft.RoundedRectangleBorder(radius=10),
+                                bgcolor=ft.Colors.BLUE_500,
+                                color="white"
+                            )
+                        )
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                alignment=ft.alignment.center
+            )
+        ],
+        expand=True
+    )
