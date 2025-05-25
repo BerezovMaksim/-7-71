@@ -1,0 +1,166 @@
+from model import create_user_answers, calculate_probabilities, DISEASES
+from view import (
+    create_main_view,
+    create_settings_view,
+    create_questions_view,
+    create_temperature_view,
+    create_results_view
+)
+import matplotlib.pyplot as plt
+import flet as ft
+def setup_app(page):
+    user_answers = create_user_answers()
+    current_view = "main"
+    def show_main_view(e=None):
+        nonlocal current_view
+        current_view = "main"
+        page.clean()
+        page.add(create_main_view(
+            on_start_click=lambda e: show_questions_view(),
+            on_settings_click=lambda e: show_settings_view()
+        ))
+        page.update()
+    def show_settings_view():
+        nonlocal current_view
+        current_view = "settings"
+        page.clean()
+        page.add(create_settings_view(
+            on_back_click=lambda e: show_main_view(),
+            on_color_change=lambda color: change_background(color)
+        ))
+        page.update()
+    def show_questions_view():
+        nonlocal current_view
+        current_view = "questions"
+        # Создаем группы вопросов
+        questions = [
+            {
+                "title": "1. У вас есть кашель?",
+                "control": ft.RadioGroup(
+                    content=ft.Column([
+                        ft.Radio(value="dry", label="Да, сухой кашель", fill_color="blue"),
+                        ft.Radio(value="wet", label="Да, влажный кашель", fill_color="blue"),
+                        ft.Radio(value="none", label="Нет", fill_color="blue")
+                    ]),
+                    on_change=lambda e: user_answers.update({"cough": e.control.value})
+                )
+            },
+            {
+                "title": "2. У вас есть насморк?",
+                "control": ft.RadioGroup(
+                    content=ft.Column([
+                        ft.Radio(value="yes", label="Да", fill_color="blue"),
+                        ft.Radio(value="congestion", label="Нет, но есть заложенность носа", fill_color="blue"),
+                        ft.Radio(value="none", label="Нет", fill_color="blue"),
+                    ]),
+                    on_change=lambda e: user_answers.update({"runny_nose": e.control.value})
+                )
+            },
+            {
+                "title": "3. У вас есть головная боль?",
+                "control": ft.RadioGroup(
+                    content=ft.Column([
+                        ft.Radio(value="yes", label="Да", fill_color="blue"),
+                        ft.Radio(value="no", label="Нет", fill_color="blue"),
+                    ]),
+                    on_change=lambda e: user_answers.update({"headache": e.control.value})
+                )
+            },
+            {
+                "title": "4. У вас есть слабость?",
+                "control": ft.RadioGroup(
+                    content=ft.Column([
+                        ft.Radio(value="yes", label="Да", fill_color="blue"),
+                        ft.Radio(value="no", label="Нет", fill_color="blue"),
+                    ]),
+                    on_change=lambda e: user_answers.update({"weakness": e.control.value})
+                )
+            },
+            {
+                "title": "5. У вас есть затруднения дыхания?",
+                "control": ft.RadioGroup(
+                    content=ft.Column([
+                        ft.Radio(value="yes", label="Да", fill_color="blue"),
+                        ft.Radio(value="no", label="Нет", fill_color="blue"),
+                    ]),
+                    on_change=lambda e: user_answers.update({"breathing_difficulty": e.control.value})
+                )
+            },
+            {
+                "title": "6. У вас есть потери обоняния и вкуса?",
+                "control": ft.RadioGroup(
+                    content=ft.Column([
+                        ft.Radio(value="yes", label="Да", fill_color="blue"),
+                        ft.Radio(value="no", label="Нет", fill_color="blue"),
+                    ]),
+                    on_change=lambda e: user_answers.update({"smell_taste_loss": e.control.value})
+                )
+            }
+        ]
+        page.clean()
+        page.add(create_questions_view(
+            questions_data=questions,
+            on_back_click=lambda e: show_main_view(),
+            on_next_click=lambda e: show_temperature_view()
+        ))
+        page.update()
+    def show_temperature_view():
+        nonlocal current_view
+        current_view = "temperature"
+        def save_temperature(temp_str, error_text, next_button):
+            try:
+                temp = float(temp_str)
+                if 33 <= temp <= 43:
+                    user_answers["temperature"] = temp
+                    error_text.value = ""
+                    next_button.visible = True
+                else:
+                    error_text.value = "Такой температуры у человека не может быть."
+                    next_button.visible = False
+            except ValueError:
+                error_text.value = "Пожалуйста, введите число"
+                next_button.visible = False
+            page.update()
+        page.clean()
+        page.add(create_temperature_view(
+            on_back_click=lambda e: show_questions_view(),
+            on_save_temp=lambda temp, err, btn: save_temperature(temp, err, btn),
+            on_show_results=lambda e: show_results_view()
+        ))
+        page.update()
+    def show_results_view():
+        nonlocal current_view
+        current_view = "results"
+        probabilities = calculate_probabilities(user_answers)
+        diseases = list(probabilities.keys())
+        data = list(probabilities.values())
+        fig = plt.figure(figsize=(10, 7))
+        plt.pie(
+            data,
+            labels=diseases,
+            autopct='%1.1f%%',
+            startangle=90,
+            shadow=True,
+            explode=[0.1 if d == max(data) else 0 for d in data],
+            colors=['#ff9999', '#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0', '#ffb3e6', '#ff6666']
+        )
+        plt.title('Вероятность заболеваний', pad=20)
+        plt.axis('equal')
+        plt.tight_layout()
+        plt.show()
+        page.clean()
+        page.add(create_results_view(
+            on_back_click=lambda e: show_main_view()
+        ))
+        page.update()
+    def change_background(color_name):
+        page.bgcolor = color_name
+        page.update()
+    # Инициализация приложения
+    page.bgcolor = "white"
+    page.title = "Диагностика заболеваний"
+    show_main_view()
+def main():
+    ft.app(target=setup_app)
+if __name__ == "__main__":
+    main()
